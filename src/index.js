@@ -1,4 +1,8 @@
 import 'bootstrap/dist/css/bootstrap.min.css';
-import init from './init';
+import App from './assets/js/App';
+
+const init = () => {
+  App();
+};
 
 init();
