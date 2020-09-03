@@ -22,51 +22,60 @@ const validate = ({ newLink }, channels) => schema
     throw err;
   });
 
-const getFeeds = (url) => axios.get(url, { timeout: 10000 })
+const corsAPIHost = 'cors-anywhere.herokuapp.com';
+
+const corsAPIUrl = `https://${corsAPIHost}/`;
+
+const getFeeds = (link) => {
+  const url = `${corsAPIUrl}${link}`;
+  return axios.get(url, { timeout: 10000 })
   .catch((err) => {
     err.name = 'NetworkError';
     throw err;
   });
+};
 
 const parse = (data) => {
   const xmlData = new DOMParser().parseFromString(data, 'text/xml');
-  const parsererror = xmlData.querySelector('parsererror');
-  if (parsererror !== null) {
+
+  const parsererrorTag = xmlData.querySelector('parsererror');
+  if (parsererrorTag !== null) {
     const err = new Error('Parser error');
     err.name = 'ParserError';
     err.message = 'The problem parsing the server response: try again or enter an another URL';
     throw err;
   }
-  const newChannel = {
+
+  const channel = {
     title: '',
     description: '',
-    posts: [],
+    items: [],
   };
 
   const channelTag = xmlData.querySelector('channel');
   if (channelTag !== null) {
     const titleTag = channelTag.querySelector('title');
     const descriptionTag = channelTag.querySelector('description');
-    newChannel.title = !titleTag ? '' : titleTag.textContent;
-    newChannel.description = !descriptionTag ? '' : descriptionTag.textContent;
+    channel.title = !titleTag ? '' : titleTag.textContent;
+    channel.description = !descriptionTag ? '' : descriptionTag.textContent;
   }
 
-  const items = xmlData.querySelectorAll('item');
-  if (!items) {
-    return newChannel;
+  const itemTags = xmlData.querySelectorAll('item');
+  if (!itemTags) {
+    return channel;
   }
 
-  const posts = [...items].map((item) => {
-    const postlinkTag = item.querySelector('link');
-    const postTitleTag = item.querySelector('title');
-    const newPost = {
-      link: !postlinkTag ? '' : postlinkTag.textContent,
-      title: !postTitleTag ? '' : postTitleTag.textContent,
+  const items = [...itemTags].map((itemTag) => {
+    const itemLinkTag = itemTag.querySelector('link');
+    const itemTitleTag = itemTag.querySelector('title');
+    const item = {
+      link: !itemLinkTag ? '' : itemLinkTag.textContent,
+      title: !itemTitleTag ? '' : itemTitleTag.textContent,
     };
-    return newPost;
+    return item;
   });
 
-  return { ...newChannel, posts };
+  return { ...channel, items };
 };
 
 const initApp = () => {
@@ -116,10 +125,10 @@ const initApp = () => {
         return parse(data);
       })
       .then((channel) => {
-        const { title, description, posts } = channel;
+        const { title, description, items } = channel;
         const channelId = _.uniqueId();
         const newChannel = { id: channelId, link: newLink, title, description };
-        const newPosts = posts.map((post) => ({ ...post, id: _.uniqueId(), channelId }));
+        const newPosts = items.map((item) => ({ ...item, id: _.uniqueId(), channelId }));
         watchedState.feeds.channels.push(newChannel);
         watchedState.feeds.posts.push(...newPosts);
       })

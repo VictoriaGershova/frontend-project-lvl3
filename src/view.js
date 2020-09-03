@@ -9,6 +9,7 @@ const removeErrorMessage = (container) => {
 };
 
 const renderFeeds = ({ channels, posts }, container) => {
+  container.textContent = '';
   channels.forEach((channel) => {
     const { id, title } = channel;
     const titleElement = document.createElement('H2');
