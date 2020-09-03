@@ -8,7 +8,7 @@ const removeErrorMessage = (container) => {
   container.textContent = '';
 };
 
-const renderChannels = ({ channels, posts }, container) => {
+const renderFeeds = ({ channels, posts }, container) => {
   channels.forEach((channel) => {
     const { id, title } = channel;
     const titleElement = document.createElement('H2');
@@ -29,55 +29,41 @@ const renderChannels = ({ channels, posts }, container) => {
   });
 };
 
-const renderForm = ({ disabled }, elements) => {
-  const {
-    newLinkInput,
-    submitBtn,
-  } = elements;
-  if (disabled) {
-    newLinkInput.setAttribute('readonly', true);
-    submitBtn.setAttribute('disabled', "");
-    return;
-  }
-  newLinkInput.removeAttribute('readonly');
-  submitBtn.removeAttribute('disabled');
-};
-
 const render = (state, elements) => {
   const {
     newChannelForm,
     newLinkInput,
+    submitBtn,
     feedbackContainer,
     feedsContainer,
   } = elements;
-
-  const renderDisabledForm = () => renderForm({ disabled: true }, elements);
-
-  const renderEnabledForm = () => renderForm({ disabled: false }, elements);
-
   const { appState } = state;
   switch (appState) {
     case 'filling':
-      renderEnabledForm();
+      newLinkInput.removeAttribute('readonly');
+      submitBtn.removeAttribute('disabled');
       break;
 
     case 'processing':
-      renderDisabledForm();
+      newLinkInput.setAttribute('readonly', true);
+      submitBtn.setAttribute('disabled', "");
       newLinkInput.classList.remove('is-invalid');
+      removeErrorMessage(feedbackContainer);
       break;
     
     case 'processed':
-      newChannelForm.reset();
-      renderEnabledForm();
       const { feeds } = state;
-      renderChannels(feeds, feedsContainer);
-      removeErrorMessage(feedbackContainer);
+      newChannelForm.reset();
+      newLinkInput.removeAttribute('readonly');
+      submitBtn.removeAttribute('disabled');
+      renderFeeds(feeds, feedsContainer);
       break;
 
     case 'failed':
       const { errorMessage } = state;
       newLinkInput.classList.add('is-invalid');
-      renderEnabledForm();
+      newLinkInput.removeAttribute('readonly');
+      submitBtn.removeAttribute('disabled');
       addErrorMessage(errorMessage, feedbackContainer);
       break;
     

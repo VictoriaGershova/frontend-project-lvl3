@@ -1,18 +1,17 @@
 import * as yup from 'yup';
 import axios from 'axios';
 import _ from 'lodash';
-import render from './view/index';
+import render from './view';
 import onChange from 'on-change';
 
 const schema = yup.object().shape({
-  newLink: yup.string().required()
-    .url()
+  newLink: yup.string().required().url()
     .when('$channels', (channels, schema) => {
       if (channels.length === 0) {
         return schema;
       }
-      const existedChannelLinks = channels.map(({ link }) => link);
-      return schema.notOneOf(existedChannelLinks)
+      const existedLinks = channels.map(({ link }) => link);
+      return schema.notOneOf(existedLinks)
     }),
 });
 
@@ -38,36 +37,39 @@ const parse = (data) => {
     err.message = 'The problem parsing the server response: try again or enter an another URL';
     throw err;
   }
+  const newChannel = {
+    title: '',
+    description: '',
+    posts: [],
+  };
 
   const channelTag = xmlData.querySelector('channel');
-  const channelTitle = channelTag.querySelector('title').textContent;
-  const channelDescription = channelTag.querySelector('description').textContent;
+  if (channelTag !== null) {
+    const titleTag = channelTag.querySelector('title');
+    const descriptionTag = channelTag.querySelector('description');
+    newChannel.title = !titleTag ? '' : titleTag.textContent;
+    newChannel.description = !descriptionTag ? '' : descriptionTag.textContent;
+  }
 
   const items = xmlData.querySelectorAll('item');
   if (!items) {
-    return { channelTitle, channelDescription };
+    return newChannel;
   }
 
   const posts = [...items].map((item) => {
-    const postlink = item.querySelector('link').textContent;
-    const postTitle = item.querySelector('title').textContent;
+    const postlinkTag = item.querySelector('link');
+    const postTitleTag = item.querySelector('title');
     const newPost = {
-      link: postlink,
-      title: postTitle,
+      link: !postlinkTag ? '' : postlinkTag.textContent,
+      title: !postTitleTag ? '' : postTitleTag.textContent,
     };
     return newPost;
   });
 
-  const newChannel = {
-    title: channelTitle,
-    description: channelDescription,
-    posts,
-  };
-  
-  return newChannel;
+  return { ...newChannel, posts };
 };
 
-const App = () => {
+const initApp = () => {
   const state = {
     appState: 'filling',
     newLink: '',
@@ -104,8 +106,9 @@ const App = () => {
 
   const handleSubmit = () => {
     const { feeds: { channels }, newLink } = watchedState;
-    watchedState.appState = 'processing';
+
     watchedState.errorMessage = null;
+    watchedState.appState = 'processing';
     validate({ newLink }, channels)
       .then(() => getFeeds(newLink))
       .then((res) => {
@@ -116,7 +119,7 @@ const App = () => {
         const { title, description, posts } = channel;
         const channelId = _.uniqueId();
         const newChannel = { id: channelId, link: newLink, title, description };
-        const newPosts = posts.map((post) => ({ id: _.uniqueId(), channelId, ...post }));
+        const newPosts = posts.map((post) => ({ ...post, id: _.uniqueId(), channelId }));
         watchedState.feeds.channels.push(newChannel);
         watchedState.feeds.posts.push(...newPosts);
       })
@@ -135,7 +138,6 @@ const App = () => {
     }
     watchedState.newLink = value;
   };
-
   elements.newLinkInput.addEventListener('input', (e) => handleInput(e));
   elements.newChannelForm.addEventListener('submit', (e) => {
     e.preventDefault();
@@ -143,4 +145,4 @@ const App = () => {
   });
 };
 
-export default App;
+export default initApp;
