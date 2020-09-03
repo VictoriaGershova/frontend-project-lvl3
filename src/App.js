@@ -19,6 +19,7 @@ const schema = yup.object().shape({
 const validate = ({ newLink }, channels) => schema
   .validate({ newLink }, { abortEarly: false, context: { channels } })
   .catch((err) => {
+    err.message = 'this must be a valid URL';
     throw err;
   });
 
@@ -34,6 +35,7 @@ const parse = (data) => {
   if (parsererror !== null) {
     const err = new Error('Parser error');
     err.name = 'ParserError';
+    err.message = 'The problem parsing the server response: try again or enter an another URL';
     throw err;
   }
 
@@ -91,23 +93,13 @@ const App = () => {
   });
 
   const handleErrors = (err) => {
-    const { name } = err;
-    switch (name) {
-      case 'ValidationError':
-        watchedState.errorMessage = 'this must be a valid URL';
-        watchedState.appState = 'failed';
-        break;
-      case 'NetworkError':
-        watchedState.errorMessage = err.message;
-        watchedState.appState = 'failed';
-        break;  
-      case 'ParserError':
-        watchedState.errorMessage = 'The problem parsing the server response: try again or enter an another URL';
-        watchedState.appState = 'failed';
-        break;
-      default:
-        throw err;
+    const { name, message } = err;
+    if (['ValidationError', 'NetworkError','ParserError'].includes(name)) {
+      watchedState.errorMessage = message;
+      watchedState.appState = 'failed';
+      return;
     }
+    throw err;
   };
 
   const handleSubmit = () => {
