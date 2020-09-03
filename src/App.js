@@ -1,26 +1,28 @@
 import * as yup from 'yup';
 import axios from 'axios';
 import _ from 'lodash';
+import render from './view/index';
+import onChange from 'on-change';
 
 const schema = yup.object().shape({
-  rSSLink: yup.string().required()
+  newLink: yup.string().required()
     .url()
     .when('$channels', (channels, schema) => {
       if (channels.length === 0) {
         return schema;
       }
-      const existedURLs = channels.map(({ link }) => link);
-      return schema.notOneOf(existedURLs, 'The RSS link is already in your channel list.')
+      const existedChannelLinks = channels.map(({ link }) => link);
+      return schema.notOneOf(existedChannelLinks)
     }),
 });
 
-const validate = (fields, channels) => schema
-  .validate(fields, { abortEarly: false, context: { channels } })
+const validate = ({ newLink }, channels) => schema
+  .validate({ newLink }, { abortEarly: false, context: { channels } })
   .catch((err) => {
     throw err;
   });
 
-const getRSSChannel = (url) => axios.get(url)
+const getFeeds = (url) => axios.get(url, { timeout: 10000 })
   .catch((err) => {
     err.name = 'NetworkError';
     throw err;
@@ -30,7 +32,7 @@ const parse = (data) => {
   const xmlData = new DOMParser().parseFromString(data, 'text/xml');
   const parsererror = xmlData.querySelector('parsererror');
   if (parsererror !== null) {
-    const err = new Error('Parser error')
+    const err = new Error('Parser error');
     err.name = 'ParserError';
     throw err;
   }
@@ -43,46 +45,65 @@ const parse = (data) => {
   if (!items) {
     return { channelTitle, channelDescription };
   }
+
   const posts = [...items].map((item) => {
-    const link = item.querySelector('link').textContent;
-    const title = item.querySelector('title').textContent;
-    return { link, title };
+    const postlink = item.querySelector('link').textContent;
+    const postTitle = item.querySelector('title').textContent;
+    const newPost = {
+      link: postlink,
+      title: postTitle,
+    };
+    return newPost;
   });
-  const channel = { channelTitle, channelDescription, posts };
-  return channel;
+
+  const newChannel = {
+    title: channelTitle,
+    description: channelDescription,
+    posts,
+  };
+  
+  return newChannel;
 };
 
 const App = () => {
   const state = {
-    form: {
-      processState: 'filling',
-      isValid: true,
-      validationErrors: [],
-      fields: {
-        rSSLink: '',
-      },
-    },
+    appState: 'filling',
+    newLink: '',
     errorMessage: null,
-    channels: [],
-    posts: [],
+    feeds: {
+      channels: [],
+      posts: [],
+    },
   };
+
+  const elements = {
+    newChannelForm: document.querySelector('.rss-form'),
+    newLinkInput: document.getElementById('newLinkInput'),
+    submitBtn: document.getElementById('submit'),
+    feedbackContainer: document.querySelector('div.feedback'),
+    feedsContainer: document.querySelector('div.feeds'),
+  };
+
+  const watchedState = onChange(state, (path) => {
+    if (path === 'appState') {
+      render(state, elements);
+    }
+  });
 
   const handleErrors = (err) => {
     const { name } = err;
     switch (name) {
       case 'ValidationError':
-        const { errors } = err;
-        state.form.processState = 'filling';
-        state.form.isValid = false;
-        state.form.validationErrors = [...errors];
+        watchedState.errorMessage = 'this must be a valid URL';
+        watchedState.appState = 'failed';
         break;
       case 'NetworkError':
-        state.form.processState = 'filling';
-        state.errorMessage = 'The network problem was occurred. Try again.';
+        watchedState.errorMessage = err.message;
+        watchedState.appState = 'failed';
         break;  
       case 'ParserError':
-        state.form.processState = 'filling';
-        state.errorMessage = 'The problem parsing the server response was occurred. Try again or enter an another RSS link.';
+        watchedState.errorMessage = 'The problem parsing the server response: try again or enter an another URL';
+        watchedState.appState = 'failed';
         break;
       default:
         throw err;
@@ -90,49 +111,44 @@ const App = () => {
   };
 
   const handleSubmit = () => {
-    const { channels, form: { fields } } = state;
-    state.form.processState = 'validation';
-    validate(fields, channels)
-      .then(() => {
-        state.form.isValid = true;
-        state.form.processState = 'processing';
-        state.form.validationErrors = [];
-        return getRSSChannel(fields.rSSLink);
-      })
+    const { feeds: { channels }, newLink } = watchedState;
+    watchedState.appState = 'processing';
+    watchedState.errorMessage = null;
+    validate({ newLink }, channels)
+      .then(() => getFeeds(newLink))
       .then((res) => {
         const { data } = res;
         return parse(data);
       })
       .then((channel) => {
-        const { form: { fields: { rSSLink: link } } } = state;
-        const { channelTitle, channelDescription, posts } = channel;
+        const { title, description, posts } = channel;
         const channelId = _.uniqueId();
-        const newChannel = { id: channelId, link, channelTitle, channelDescription };
+        const newChannel = { id: channelId, link: newLink, title, description };
         const newPosts = posts.map((post) => ({ id: _.uniqueId(), channelId, ...post }));
-        state.channels.push(newChannel);
-        state.posts.push(...newPosts);
+        watchedState.feeds.channels.push(newChannel);
+        watchedState.feeds.posts.push(...newPosts);
       })
       .then(() => {
-        state.form.processState = 'filling';
-        state.errorMessages = [];
-        state.form.fields.rSSLink = '';
+        watchedState.newLink = '';
+        watchedState.appState = 'processed';
       })
       .catch((err) => handleErrors(err));
   };
 
-  const newRSSLinkForm = document.querySelector('.rss-form');
-  const rSSLinkInput = document.getElementById('rSSLink');
-
-  rSSLinkInput.addEventListener('input', (e) => {
+  const handleInput = (e) => {
     const { target: { value } } = e;
-    state.form.fields.rSSLink = value;
-  })
+    const { appState } = watchedState;
+    if (appState !== 'filling') {
+      watchedState.appState = 'filling';
+    }
+    watchedState.newLink = value;
+  };
 
-  newRSSLinkForm.addEventListener('submit', (e) => {
+  elements.newLinkInput.addEventListener('input', (e) => handleInput(e));
+  elements.newChannelForm.addEventListener('submit', (e) => {
     e.preventDefault();
     handleSubmit();
   });
-
 };
 
 export default App;
