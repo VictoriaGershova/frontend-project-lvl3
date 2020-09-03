@@ -46,6 +46,7 @@ const renderForm = ({ disabled }, elements) => {
 const render = (state, elements) => {
   const {
     newChannelForm,
+    newLinkInput,
     feedbackContainer,
     feedsContainer,
   } = elements;
@@ -62,6 +63,7 @@ const render = (state, elements) => {
 
     case 'processing':
       renderDisabledForm();
+      newLinkInput.classList.remove('is-invalid');
       break;
     
     case 'processed':
@@ -74,6 +76,7 @@ const render = (state, elements) => {
 
     case 'failed':
       const { errorMessage } = state;
+      newLinkInput.classList.add('is-invalid');
       renderEnabledForm();
       addErrorMessage(errorMessage, feedbackContainer);
       break;
