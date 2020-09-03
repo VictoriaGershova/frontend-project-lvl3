@@ -26,9 +26,13 @@ const corsAPIHost = 'cors-anywhere.herokuapp.com';
 
 const corsAPIUrl = `https://${corsAPIHost}/`;
 
+const headers = {
+  origin: window.location.protocol + '//' + window.location.host,
+};
+
 const getFeeds = (link) => {
   const url = `${corsAPIUrl}${link}`;
-  return axios.get(url, { timeout: 10000 })
+  return axios.get(url, { timeout: 10000, headers })
   .catch((err) => {
     err.name = 'NetworkError';
     throw err;
@@ -122,6 +126,7 @@ const initApp = () => {
       .then(() => getFeeds(newLink))
       .then((res) => {
         const { data } = res;
+        alert(Object.keys(res.headers));
         return parse(data);
       })
       .then((channel) => {
