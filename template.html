@@ -11,18 +11,18 @@
         <div class="container-fluid">
           <div class="row">
             <div class="col-md-10 col-lg-8 mx-auto">
-              <h1 class="display-3">RSS Reader</h1>
-              <p class="lead">Start reading RSS today! It is easy, it is nice.</p>
+              <h1 class="display-3 rss-title"></h1>
+              <p class="lead rss-sign"></p>
               <form class="rss-form">
                 <div class="form-row">
                   <div class="col">
-                    <input required autofocus type="url" name="newLinkInput" id='newLinkInput' class="form-control form-control-lg" placeholder="RSS link" aria-describedby="example">
+                    <input required autofocus type="url" name="newLinkInput" id='newLinkInput' class="form-control form-control-lg" aria-describedby="example">
                   </div>
                   <div class="col-auto">
                     <button type="submit" id="submit" class="btn btn-lg btn-primary px-sm-5">Add</button>
                   </div>        
                 </div>
-                <p id="example" class="text-muted">Example: https://ru.hexlet.io/lessons.rss</small>
+                <p id="example" class="text-muted"></p>
               </form>
               <div class="feedback"></div>
             </div>

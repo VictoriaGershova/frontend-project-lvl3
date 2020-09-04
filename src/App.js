@@ -3,6 +3,19 @@ import axios from 'axios';
 import _ from 'lodash';
 import render from './view';
 import onChange from 'on-change';
+import i18next from 'i18next';
+import resources from './locales';
+
+i18next.init({
+  lng: 'en',
+  debug: true,
+  resources,
+}).then((t) => {
+  document.querySelector('.rss-title').textContent = i18next.t('rssTitle');
+  document.querySelector('.rss-sign').textContent = i18next.t('rssSign');
+  document.getElementById('example').textContent = i18next.t('example');
+  document.getElementById('newLinkInput').setAttribute('placeholder', i18next.t('rssLinkPlaceholder'));
+});
 
 const schema = yup.object().shape({
   newLink: yup.string().required().url()
@@ -18,7 +31,7 @@ const schema = yup.object().shape({
 const validate = ({ newLink }, channels) => schema
   .validate({ newLink }, { abortEarly: false, context: { channels } })
   .catch((err) => {
-    err.message = 'this must be a valid URL';
+    err.message = i18next.t('errorsMessages.validationError');
     throw err;
   });
 
@@ -26,13 +39,9 @@ const corsAPIHost = 'cors-anywhere.herokuapp.com';
 
 const corsAPIUrl = `https://${corsAPIHost}/`;
 
-const headers = {
-  origin: window.location.protocol + '//' + window.location.host,
-};
-
 const getFeeds = (link) => {
   const url = `${corsAPIUrl}${link}`;
-  return axios.get(url, { timeout: 10000, headers })
+  return axios.get(url, { timeout: 10000 })
   .catch((err) => {
     err.name = 'NetworkError';
     throw err;
@@ -44,9 +53,9 @@ const parse = (data) => {
 
   const parsererrorTag = xmlData.querySelector('parsererror');
   if (parsererrorTag !== null) {
-    const err = new Error('Parser error');
+    const err = new Error();
     err.name = 'ParserError';
-    err.message = 'The problem parsing the server response: try again or enter an another URL';
+    err.message = i18next.t('errorsMessages.parserError');
     throw err;
   }
 
@@ -107,6 +116,39 @@ const initApp = () => {
     }
   });
 
+  const addNewChannel = ({ link, title, description }) => {
+    const id = _.uniqueId();
+    const newChannel = { id, link, title, description };
+    watchedState.feeds.channels.push(newChannel);
+    return id;
+  };
+
+  const addNewPosts = (channelId, items) => {
+    const { feeds: { posts } } = state;
+    const channelPosts = posts.filter((post) => post.channelId === channelId);
+    const newItems = _.differenceBy(items, channelPosts, ({ title, link }) => ({ title, link }));
+    if (newItems.length === 0) {
+      return;
+    }
+    const newPosts = newItems.map((item) => ({ ...item, id: _.uniqueId(), channelId }));
+    watchedState.feeds.posts.push(...newPosts);
+  };
+
+  const handleRequest = () => {
+    const { feeds: { channels } } = state;
+    channels.forEach((channel) => {
+      const { id: channelId, link } = channel;
+      getFeeds(link)
+        .then((res) => {
+          const { data } = res;
+          return parse(data);
+        })
+        .then(({ items }) => addNewPosts(channelId, items))
+        .then(() => setTimeout(() => handleRequest(), 1000))
+        .catch((err) => console.log(err));
+    });
+  };
+
   const handleErrors = (err) => {
     const { name, message } = err;
     if (['ValidationError', 'NetworkError','ParserError'].includes(name)) {
@@ -126,16 +168,12 @@ const initApp = () => {
       .then(() => getFeeds(newLink))
       .then((res) => {
         const { data } = res;
-        alert(Object.keys(res.headers));
         return parse(data);
       })
       .then((channel) => {
         const { title, description, items } = channel;
-        const channelId = _.uniqueId();
-        const newChannel = { id: channelId, link: newLink, title, description };
-        const newPosts = items.map((item) => ({ ...item, id: _.uniqueId(), channelId }));
-        watchedState.feeds.channels.push(newChannel);
-        watchedState.feeds.posts.push(...newPosts);
+        const channelId = addNewChannel({ link: newLink, title, description });
+        addNewPosts(channelId, items);
       })
       .then(() => {
         watchedState.newLink = '';
@@ -157,6 +195,7 @@ const initApp = () => {
     e.preventDefault();
     handleSubmit();
   });
+  handleRequest();
 };
 
 export default initApp;
