@@ -1,8 +1,8 @@
 import 'bootstrap/dist/css/bootstrap.min.css';
-import App from './App';
+import init from './init';
 
-const init = () => {
-  App();
+const runApp = () => {
+  init();
 };
 
-init();
+runApp();
