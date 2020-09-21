@@ -1,76 +1,91 @@
-const addErrorMessage = (message, container) => {
-  container.classList.add('text-danger');
+import i18n from 'i18next';
+
+const renderFeedback = (container, type = 'empty', message = '') => {
+  container.classList.toggle('text-danger', type === 'fail');
+  container.classList.toggle('text-success', type === 'success');
   container.textContent = message;
 };
 
-const removeErrorMessage = (container) => {
-  container.classList.remove('text-danger');
-  container.textContent = '';
+const renderPostItem = ({ link, title }, container) => {
+  const linkEl = document.createElement('A');
+  linkEl.setAttribute('href', link);
+  linkEl.setAttribute('target', '_blank');
+  linkEl.classList.add('list-group-item', 'list-group-item-action', 'bg-light');
+  linkEl.textContent = title;
+  container.appendChild(linkEl);
 };
 
-const renderFeeds = ({ channels, posts }, container) => {
+const renderFeedItem = ({ title }, posts, container) => {
+  const feedEl = document.createElement('DIV');
+  feedEl.classList.add('card', 'bg-light', 'mb-3');
+  const feedBodyEl = document.createElement('DIV');
+  feedBodyEl.classList.add('card-body');
+
+  const titleEl = document.createElement('H2');
+  titleEl.classList.add('card-title');
+  titleEl.textContent = title;
+  feedBodyEl.appendChild(titleEl);
+
+  const postsContainer = document.createElement('DIV')
+  postsContainer.classList.add('list-group', 'list-group-flush');
+  feedBodyEl.appendChild(postsContainer);
+
+  feedEl.appendChild(feedBodyEl);
+  container.appendChild(feedEl);
+  posts.forEach((post) => renderPostItem(post, postsContainer));
+};
+
+export const renderFeeds = ({ channels, posts }, container) => {
   container.textContent = '';
   channels.forEach((channel) => {
-    const { id, title } = channel;
-    const titleElement = document.createElement('H2');
-    titleElement.textContent = title;
-    container.append(titleElement);
-
+    const { id } = channel;
     const channelPosts = posts.filter(({ channelId }) => channelId === id);
-    channelPosts.forEach((post) => {
-      const { link, title } = post;
-      const div = document.createElement('DIV');
-      const linkElement = document.createElement('A');
-      linkElement.setAttribute('href', link);
-      linkElement.setAttribute('target', '_blank')
-      linkElement.textContent = title;
-      div.append(linkElement);
-      container.append(div);
-    });
+    renderFeedItem(channel, channelPosts, container);
   });
 };
 
-const render = (state, elements) => {
+export const renderForm = (processState, elements) => {
   const {
-    newChannelForm,
-    newLinkInput,
+    state,
+    validState,
+    error,
+  } = processState;
+
+  const {
+    rssForm,
+    linkInput,
     submitBtn,
     feedbackContainer,
-    feedsContainer,
   } = elements;
-  const { appState } = state;
-  switch (appState) {
+
+  switch (state) {
     case 'filling':
-      newLinkInput.removeAttribute('readonly');
+      linkInput.removeAttribute('readonly');
       submitBtn.removeAttribute('disabled');
+      break;
+
+    case 'validation':
+      linkInput.setAttribute('readonly', '');
+      submitBtn.setAttribute('disabled', '');
       break;
 
     case 'processing':
-      newLinkInput.setAttribute('readonly', true);
-      submitBtn.setAttribute('disabled', "");
-      newLinkInput.classList.remove('is-invalid');
-      removeErrorMessage(feedbackContainer);
+      linkInput.classList.remove('is-invalid');
+      renderFeedback(feedbackContainer, 'empty');
       break;
-    
+
     case 'processed':
-      const { feeds } = state;
-      newChannelForm.reset();
-      newLinkInput.removeAttribute('readonly');
-      submitBtn.removeAttribute('disabled');
-      renderFeeds(feeds, feedsContainer);
+      rssForm.reset();
+      renderFeedback(feedbackContainer, 'success', i18n.t('success'));
       break;
 
     case 'failed':
-      const { errorMessage } = state;
-      newLinkInput.classList.add('is-invalid');
-      newLinkInput.removeAttribute('readonly');
-      submitBtn.removeAttribute('disabled');
-      addErrorMessage(errorMessage, feedbackContainer);
+      const isInvalid = validState === 'invalid';
+      linkInput.classList.toggle('is-invalid', isInvalid);
+      renderFeedback(feedbackContainer, 'fail', i18n.t([`error.${error}`, 'error.unspecific']));
       break;
     
     default:
-      throw new Error(`Unknown app state: "${appState}"`);
-  };
+      throw new Error(`Unknown "Creation" process state: "${state}"`);
+  }
 };
-
-export default render;
