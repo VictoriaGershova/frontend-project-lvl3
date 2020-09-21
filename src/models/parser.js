@@ -1,10 +1,11 @@
-const parseRSS = (data) => {
+const parse = (data) => {
   const xmlData = new DOMParser().parseFromString(data, 'text/xml');
 
   const parsererrorTag = xmlData.querySelector('parsererror');
   if (parsererrorTag !== null) {
     const err = new Error();
     err.name = 'ParserError';
+    err.message = 'parser';
     throw err;
   }
 
@@ -33,4 +34,4 @@ const parseRSS = (data) => {
   return { channel };
 };
 
-export default parseRSS;
+export default parse;

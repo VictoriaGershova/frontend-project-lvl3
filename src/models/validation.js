@@ -1,8 +1,8 @@
 import * as yup from 'yup';
-import i18next from 'i18next';
 
 yup.setLocale({
   mixed: {
+    required: 'invalidLink',
     url: 'invalidLink',
     notOneOf: 'existedLink',
   },

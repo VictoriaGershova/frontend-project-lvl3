@@ -7,9 +7,10 @@ const en = {
       placeholder: 'RSS Link'
     },
     error: {
-      parser: "can't parse RSS: try again or enter an another URL",
+      parser: 'invalid RSS response',
       invalidLink: 'this must be a valid URL',
       existedLink: 'RSS already exists',
+      network_404: 'the page was not found', 
       unspecific: 'something went wrong',
     },
     success: 'RSS has been loaded',
