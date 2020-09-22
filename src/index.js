@@ -90,8 +90,8 @@ const runApp = () => {
       })
       .then(() => getNewFeed(link))
       .then(({ channel, channelPosts }) => {
-        appState.data.channels.push(channel);
-        appState.data.posts.push(...channelPosts);
+        appState.data.channels.unshift(channel);
+        appState.data.posts.unshift(...channelPosts);
         watchedState.creating.state = 'processed';
       })
       .catch((err) => {
@@ -111,7 +111,7 @@ const runApp = () => {
     const { data } = appState;
     getFeedsUpdate(data)
       .then((newPosts) => {
-        appState.data.posts.push(...newPosts);
+        appState.data.posts.unshift(...newPosts);
         watchedState.update.state = 'processed';
       })
       .catch(() => watchedState.update.state = 'failed')

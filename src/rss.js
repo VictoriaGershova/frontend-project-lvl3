@@ -24,7 +24,7 @@ export const getNewFeed = (link) => getData(link)
     return { channel, channelPosts };
   });
 
-const isExistedItem = (item, { link, title }) => _.isEqual(item, { link, title });
+const isMatched = (item, { link, title }) => _.isEqual(item, { link, title });
 
 export const getFeedsUpdate = ({ channels, posts }) => {
   const promises = channels.map(
@@ -32,7 +32,7 @@ export const getFeedsUpdate = ({ channels, posts }) => {
       .then((data) => {
         const { channel: { items } } = data;
         const existedPosts = posts.filter((post) => post.channelId === id);
-        const newItems = _.differenceWith(items, existedPosts, isExistedItem);
+        const newItems = _.differenceWith(items, existedPosts, isMatched);
         return makePosts(id, newItems);
       }));
 
