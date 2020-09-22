@@ -7,15 +7,13 @@ const getData = (link) => getRSSData(link)
 
 const makeChannel = ({ link, title, description }) => {
   const id = _.uniqueId();
-  const channel = { id, link, title, description };
-  return channel;
+  return { id, link, title, description };
 };
 
 const makePosts = (channelId, items) => {
   const posts = items.map(({ link, title }) => {
     const id = _.uniqueId();
-    const post = { id, channelId, link, title };
-    return post;
+    return { id, channelId, link, title };
   });
   return posts;
 };

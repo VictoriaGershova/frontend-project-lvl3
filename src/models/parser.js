@@ -20,8 +20,7 @@ const parse = (data) => {
     const link = linkTag.textContent;
     const titleTag = itemTag.querySelector('title');
     const title = titleTag.textContent;
-    const item = { link, title };
-    return item;
+    return { link, title };
   });
 
   const channel = {
