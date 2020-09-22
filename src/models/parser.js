@@ -3,9 +3,8 @@ const parse = (data) => {
 
   const parsererrorTag = xmlData.querySelector('parsererror');
   if (parsererrorTag !== null) {
-    const err = new Error();
+    const err = new Error('parser');
     err.name = 'ParserError';
-    err.message = 'parser';
     throw err;
   }
 
