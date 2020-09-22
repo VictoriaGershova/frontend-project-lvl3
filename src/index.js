@@ -68,7 +68,7 @@ const runApp = () => {
         watchedState.creating.error = message;
         break;
       default:
-        console.log(err);
+        throw err;
     };
   };
 
