@@ -35,7 +35,11 @@ const renderFeedItem = ({ title }, posts, container) => {
   posts.forEach((post) => renderPostItem(post, postsContainer));
 };
 
-export const renderFeeds = ({ channels, posts }, container) => {
+export const renderFeeds = (processState, { channels, posts }, container) => {
+  const { state } = processState;
+  if (state !== 'processed') {
+    return;
+  }
   container.textContent = '';
   channels.forEach((channel) => {
     const { id } = channel;

@@ -18,10 +18,8 @@ const runApp = () => {
       update: { state: 'waiting' },
     },
     data: {
-      feeds: {
-        channels: [],
-        posts: [],
-      },
+      channels: [],
+      posts: [],
     },
   };
 
@@ -36,18 +34,25 @@ const runApp = () => {
     feedbackContainer: document.querySelector('.feedback'),
   };
 
-  const watchedCreating = onChange(appState.processes.creating, (path, value) => {
-    if (path === 'state') {
-      renderForm(appState.processes.creating, elements);
-      if (value === 'processed') {
-        renderFeeds(appState.data.feeds, elements.feedsContainer);
-      }
-    }
-  });
+  const handleCreatingState = () => {
+    const { processes: { creating: processState }, data } = appState;
+    renderForm(processState, elements);
+    renderFeeds(processState, data, elements.feedsContainer);
+  };
 
-  const watchedUpdate = onChange(appState.processes.update, (path, value) => {
-    if (path === 'state' && value === 'processed') {
-      renderFeeds(appState.data.feeds, elements.feedsContainer);
+  const handleUpdateState = () => {
+    const { processes: { update: processState }, data } = appState;
+    renderFeeds(processState, data, elements.feedsContainer);
+  };
+
+  const watchedState = onChange(appState.processes, (path) => {
+    switch (path) {
+      case 'creating.state':
+        handleCreatingState();
+        break;
+      case 'update.state':
+        handleUpdateState();
+        break;
     }
   });
 
@@ -56,11 +61,11 @@ const runApp = () => {
     switch (name) {
       case 'NetworkError':
       case 'ParserError':
-        watchedCreating.error = message;
+        watchedState.creating.error = message;
         break;
       case 'ValidationError':
-        watchedCreating.validState = 'invalid';
-        watchedCreating.error = message;
+        watchedState.creating.validState = 'invalid';
+        watchedState.creating.error = message;
         break;
       default:
         console.log(err);
@@ -74,46 +79,45 @@ const runApp = () => {
           form: { link },
         },
       },
-      data: { feeds },
+      data: { channels },
     } = appState;
-    watchedCreating.state = 'validation';
-    return validate({ link }, feeds.channels)
+    watchedState.creating.state = 'validation';
+    return validate({ link }, channels)
       .then(() => {
-        watchedCreating.validState = 'valid';
-        watchedCreating.error = null;
-        watchedCreating.state = 'processing';
+        watchedState.creating.validState = 'valid';
+        watchedState.creating.error = null;
+        watchedState.creating.state = 'processing';
       })
       .then(() => getNewFeed(link))
-      .then((feed) => {
-        const { channel, channelPosts } = feed;
-        appState.data.feeds.channels.push(channel);
-        appState.data.feeds.posts.push(...channelPosts);
-        watchedCreating.state = 'processed';
+      .then(({ channel, channelPosts }) => {
+        appState.data.channels.push(channel);
+        appState.data.posts.push(...channelPosts);
+        watchedState.creating.state = 'processed';
       })
       .catch((err) => {
         handleError(err);
-        watchedCreating.state = 'failed';
+        watchedState.creating.state = 'failed';
       })
-      .then(() => watchedCreating.state = 'filling');
+      .then(() => watchedState.creating.state = 'filling');
   };
 
   const handleLinkInput = (e) => {
     const { target: { value } } = e;
-    watchedCreating.form.link = value;
+    watchedState.creating.form.link = value;
   };
 
   const runUpdateFeeds = () => {
-    watchedUpdate.state = 'processing';
-    const { data: { feeds } } = appState;
-    getFeedsUpdate(feeds)
+    watchedState.update.state = 'processing';
+    const { data } = appState;
+    getFeedsUpdate(data)
       .then((newPosts) => {
-        appState.data.feeds.posts.push(...newPosts);
-        watchedUpdate.state = 'processed';
+        appState.data.posts.push(...newPosts);
+        watchedState.update.state = 'processed';
       })
-      .catch(() => watchedUpdate.state = 'failed')
+      .catch(() => watchedState.update.state = 'failed')
       .then(() => {
         setTimeout(() => runUpdateFeeds(), 5000);
-        watchedUpdate.state = 'waiting';
+        watchedState.update.state = 'waiting';
       });
   };
 

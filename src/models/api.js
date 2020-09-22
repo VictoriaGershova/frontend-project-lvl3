@@ -1,6 +1,6 @@
 import axios from 'axios';
 
-const corsAPIHost = 'hidden-lake-93699.herokuapp.com/';
+const corsAPIHost = 'hidden-lake-93699.herokuapp.com';
 const corsAPIUrl = `https://${corsAPIHost}/`;
 
 const getRSSData = (link) => {
