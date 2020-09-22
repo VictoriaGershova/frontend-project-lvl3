@@ -116,7 +116,7 @@ const runApp = () => {
       })
       .catch(() => watchedState.update.state = 'failed')
       .then(() => {
-        setTimeout(() => runUpdateFeeds(), 5000);
+        setTimeout(runUpdateFeeds, 5000);
         watchedState.update.state = 'waiting';
       });
   };
