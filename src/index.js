@@ -87,8 +87,8 @@ const runApp = () => {
         watchedState.creating.validState = 'valid';
         watchedState.creating.error = null;
         watchedState.creating.state = 'processing';
+        return getNewFeed(link);
       })
-      .then(() => getNewFeed(link))
       .then(({ channel, channelPosts }) => {
         appState.data.channels.unshift(channel);
         appState.data.posts.unshift(...channelPosts);
@@ -98,7 +98,7 @@ const runApp = () => {
         handleError(err);
         watchedState.creating.state = 'failed';
       })
-      .then(() => watchedState.creating.state = 'filling');
+      .finally(() => watchedState.creating.state = 'filling');
   };
 
   const handleLinkInput = (e) => {
@@ -115,7 +115,7 @@ const runApp = () => {
         watchedState.update.state = 'processed';
       })
       .catch(() => watchedState.update.state = 'failed')
-      .then(() => {
+      .finally(() => {
         setTimeout(runUpdateFeeds, 5000);
         watchedState.update.state = 'waiting';
       });
