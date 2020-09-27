@@ -3,7 +3,7 @@ import { getNewFeed, getFeedsUpdate } from './rss';
 import onChange from 'on-change';
 import resources from './locales';
 import { renderForm, renderFeeds } from './view';
-import validate from './models/validation';
+import validate from './validation';
 import * as yup from 'yup';
 
 export default () => {

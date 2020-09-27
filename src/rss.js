@@ -1,6 +1,6 @@
 import _ from 'lodash';
-import getRSSData from './models/api';
-import parse from './models/parser';
+import getRSSData from './api';
+import parse from './parser';
 
 const getData = (link) => getRSSData(link).then((data) => parse(data));
 
