@@ -8,18 +8,11 @@ yup.setLocale({
   },
 });
 
-const channelSchema = yup.object().shape({
-  link: yup.string().required().url()
-    .when('$channels', (channels, schema) => {
-      if (channels.length === 0) {
-        return schema;
-      }
-      const existedLinks = channels.map(({ link }) => link);
-      return schema.notOneOf(existedLinks);
-    }),
-});
+const baseSchema = yup.string().required().url();
 
-const validate = ({ link }, channels) => channelSchema
-  .validate({ link }, { abortEarly: false, context: { channels } });
+const validate = (link, channels) => {
+  const existedLinks = channels.map(({ link }) => link);
+  return baseSchema.notOneOf(existedLinks).validate(link, { abortEarly: false });
+};
 
 export default validate;

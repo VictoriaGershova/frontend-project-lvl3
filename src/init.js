@@ -81,7 +81,7 @@ export default () => {
       data: { channels },
     } = appState;
     watchedState.creating.state = 'validation';
-    return validate({ link }, channels)
+    return validate(link, channels)
       .then(() => {
         watchedState.creating.validState = 'valid';
         watchedState.creating.error = null;
