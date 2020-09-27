@@ -4,6 +4,7 @@ import onChange from 'on-change';
 import resources from './locales';
 import { renderForm, renderFeeds } from './view';
 import validate from './models/validation';
+import * as yup from 'yup';
 
 export default () => {
   const appState = {
@@ -125,15 +126,25 @@ export default () => {
     debug: true,
     resources,
   }).then(() => {
+    yup.setLocale({
+      mixed: {
+        required: 'invalidLink',
+        url: 'invalidLink',
+        notOneOf: 'existedLink',
+      },
+    });
+
     elements.rssTitle.textContent = i18n.t('title');
     elements.rssSign.textContent = i18n.t('sign');
     elements.linkInput.setAttribute('placeholder', i18n.t('link.placeholder'));
     elements.linkExample.textContent = i18n.t('link.example');
+
     elements.rssForm.addEventListener('submit', (e) => {
       e.preventDefault();
       handleSubmit();
     });
     elements.linkInput.addEventListener('input', (e) => handleLinkInput(e));
+    
     runUpdateFeeds();
   });
 };

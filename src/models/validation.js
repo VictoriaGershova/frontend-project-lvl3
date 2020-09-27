@@ -1,13 +1,5 @@
 import * as yup from 'yup';
 
-yup.setLocale({
-  mixed: {
-    required: 'invalidLink',
-    url: 'invalidLink',
-    notOneOf: 'existedLink',
-  },
-});
-
 const baseSchema = yup.string().required().url();
 
 const validate = (link, channels) => {
