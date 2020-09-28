@@ -1,10 +1,12 @@
+/* eslint default-case: 0 */
+
 import i18n from 'i18next';
-import { getNewFeed, getFeedsUpdate } from './rss';
 import onChange from 'on-change';
+import * as yup from 'yup';
+import { getNewFeed, getFeedsUpdate } from './rss';
 import resources from './locales';
 import { renderForm, renderFeeds } from './view';
 import validate from './validation';
-import * as yup from 'yup';
 
 export default () => {
   const appState = {
@@ -69,7 +71,7 @@ export default () => {
         break;
       default:
         throw err;
-    };
+    }
   };
 
   const handleSubmit = () => {
@@ -98,7 +100,9 @@ export default () => {
         handleError(err);
         watchedState.creating.state = 'failed';
       })
-      .finally(() => watchedState.creating.state = 'filling');
+      .finally(() => {
+        watchedState.creating.state = 'filling';
+      });
   };
 
   const handleLinkInput = (e) => {
@@ -114,7 +118,9 @@ export default () => {
         appState.data.posts.unshift(...newPosts);
         watchedState.update.state = 'processed';
       })
-      .catch(() => watchedState.update.state = 'failed')
+      .catch(() => {
+        watchedState.update.state = 'failed';
+      })
       .finally(() => {
         setTimeout(runUpdateFeeds, 5000);
         watchedState.update.state = 'waiting';
@@ -144,7 +150,7 @@ export default () => {
       handleSubmit();
     });
     elements.linkInput.addEventListener('input', (e) => handleLinkInput(e));
-    
+
     runUpdateFeeds();
   });
 };

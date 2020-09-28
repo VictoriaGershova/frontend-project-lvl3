@@ -6,14 +6,25 @@ const getData = (link) => getRSSData(link).then((data) => parse(data));
 
 const makeChannel = ({ link, title, description }) => {
   const id = _.uniqueId();
-  return { id, link, title, description };
+  return {
+    id,
+    link,
+    title,
+    description,
+  };
 };
 
 const makePosts = (channelId, items) => items.map(
   ({ link, title }) => {
     const id = _.uniqueId();
-    return { id, channelId, link, title };
-  });
+    return {
+      id,
+      channelId,
+      link,
+      title,
+    };
+  },
+);
 
 export const getNewFeed = (link) => getData(link)
   .then((data) => {
@@ -34,7 +45,8 @@ export const getFeedsUpdate = ({ channels, posts }) => {
         const existedPosts = posts.filter((post) => post.channelId === id);
         const newItems = _.differenceWith(items, existedPosts, isMatched);
         return makePosts(id, newItems);
-      }));
+      }),
+  );
 
   return Promise.all(promises).then((allNewPosts) => _.flatten(allNewPosts));
 };

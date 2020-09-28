@@ -16,11 +16,11 @@ const parse = (data) => {
 
   const itemTags = xmlData.querySelectorAll('item');
   const items = [...itemTags].map((itemTag) => {
-    const linkTag = itemTag.querySelector('link');
-    const link = linkTag.textContent;
-    const titleTag = itemTag.querySelector('title');
-    const title = titleTag.textContent;
-    return { link, title };
+    const itemLinkTag = itemTag.querySelector('link');
+    const itemLink = itemLinkTag.textContent;
+    const itemTitleTag = itemTag.querySelector('title');
+    const itemTitle = itemTitleTag.textContent;
+    return { link: itemLink, title: itemTitle };
   });
 
   const channel = {

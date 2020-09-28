@@ -1,9 +1,13 @@
+---
+
+plugins:
+  - babel
 env:
   browser: true
   es2020: true
   node: true
+parser: babel-eslint
 extends:
-  - airbnb-base
-plugins:
-  - babel
+  - 'airbnb-base'
+
 rules: {}

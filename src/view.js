@@ -1,3 +1,5 @@
+/* eslint no-param-reassign: 0 */
+
 import i18n from 'i18next';
 
 const renderFeedback = (container, type = 'empty', message = '') => {
@@ -26,7 +28,7 @@ const renderFeedItem = ({ title }, posts, container) => {
   titleEl.textContent = title;
   feedBodyEl.appendChild(titleEl);
 
-  const postsContainer = document.createElement('DIV')
+  const postsContainer = document.createElement('DIV');
   postsContainer.classList.add('list-group', 'list-group-flush');
   feedBodyEl.appendChild(postsContainer);
 
@@ -84,11 +86,10 @@ export const renderForm = (processState, elements) => {
       break;
 
     case 'failed':
-      const isInvalid = validState === 'invalid';
-      linkInput.classList.toggle('is-invalid', isInvalid);
+      linkInput.classList.toggle('is-invalid', validState === 'invalid');
       renderFeedback(feedbackContainer, 'fail', i18n.t([`error.${error}`, 'error.unspecific']));
       break;
-    
+
     default:
       throw new Error(`Unknown "Creation" process state: "${state}"`);
   }

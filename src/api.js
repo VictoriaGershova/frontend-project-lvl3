@@ -1,3 +1,4 @@
+/* eslint no-param-reassign: 0 */
 import axios from 'axios';
 
 const corsAPIHost = 'hidden-lake-93699.herokuapp.com';
@@ -8,7 +9,7 @@ const getRSSData = (link) => {
   return axios.get(url, { timeout: 10000 })
     .then((res) => {
       const { data } = res;
-      return data
+      return data;
     }).catch((err) => {
       err.name = 'NetworkError';
       if (err.response) {
