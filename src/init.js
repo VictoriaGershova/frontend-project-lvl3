@@ -1,5 +1,3 @@
-/* eslint default-case: 0 */
-
 import i18n from 'i18next';
 import onChange from 'on-change';
 import * as yup from 'yup';
@@ -54,6 +52,8 @@ export default () => {
         break;
       case 'update.state':
         handleUpdateState();
+        break;
+      default:
         break;
     }
   });
@@ -149,7 +149,7 @@ export default () => {
       e.preventDefault();
       handleSubmit();
     });
-    elements.linkInput.addEventListener('input', (e) => handleLinkInput(e));
+    elements.linkInput.addEventListener('input', handleLinkInput);
 
     runUpdateFeeds();
   });
